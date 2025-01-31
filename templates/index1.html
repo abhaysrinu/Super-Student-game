@@ -5,92 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SuperStudent Game</title>
     <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
         font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+        width: 100%;
+        min-height: 100vh;
+        margin: 0;
+        padding: 1rem;
         background-color: rgb(83, 212, 255);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         align-items: center;
       }
+
+      .game-container {
+        background-color: rgb(0, 83, 128);
+        padding: 1.25rem;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(28, 13, 165, 0.1);
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
       h1 {
         color: white;
         font-weight: bold;
         font-style: italic;
-      }
-      .game-container {
-        background-color: rgb(0, 83, 128);
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(28, 13, 165, 0.1);
-        width: 90%;
+        text-align: center;
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        margin-bottom: 1rem;
       }
 
       .header {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        gap: 1rem;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 1.25rem;
+      }
+
+      .game-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
       }
 
       .stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
       }
 
       .stat-box {
         background-color: rgb(103, 129, 217);
-        padding: 10px;
+        padding: 0.75rem;
         border-radius: 5px;
         text-align: center;
+        color: white;
       }
 
       .problem {
-        font-size: 28px;
-        margin: 22px 0;
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        margin: 1.25rem 0;
         text-align: center;
+        color: white;
       }
 
       .mapping {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 10px;
-        margin: 20px 0;
+        gap: 0.75rem;
+        margin: 1.25rem 0;
       }
 
       .mapping-item {
         background-color: rgb(102, 192, 101);
-        padding: 10px;
+        padding: 0.75rem;
         border-radius: 5px;
         text-align: center;
+        color: white;
       }
 
       .controls {
         display: flex;
-        gap: 10px;
-        margin: 20px 0;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin: 1.25rem 0;
       }
 
       input[type="number"] {
         flex: 1;
-        padding: 10px;
+        min-width: 120px;
+        padding: 0.75rem;
         border: 2px solid #ddd;
         border-radius: 5px;
+        font-size: 1rem;
       }
 
       button {
         background-color: #007bff;
         color: white;
         border: none;
-        padding: 10px 20px;
+        padding: 0.75rem 1.25rem;
         border-radius: 5px;
         cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s;
       }
 
       button:hover {
@@ -103,8 +131,8 @@
       }
 
       .feedback {
-        margin: 20px 0;
-        padding: 10px;
+        margin: 1.25rem 0;
+        padding: 0.75rem;
         border-radius: 5px;
         text-align: center;
       }
@@ -120,37 +148,29 @@
       }
 
       .hints {
-        margin-top: 20px;
+        margin-top: 1.25rem;
       }
 
       .hint {
-        padding: 10px;
-        margin: 5px 0;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
         background-color: #fff3cd;
         border-radius: 5px;
         display: none;
       }
 
-      .difficulty-toggle {
+      .audio-controls {
         display: flex;
-        gap: 10px;
-        margin: 20px 0;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
       }
 
-      .game-start,
-      .game-end {
-        background-color: white;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-      }
-
-      .game-over-overlay {
+      .game-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        right: 0;
-        bottom: 0;
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.8);
@@ -160,32 +180,15 @@
         z-index: 1000;
       }
 
+      .game-start,
       .game-over-message {
         background: white;
         padding: 2rem;
         border-radius: 10px;
         text-align: center;
-      }
-
-      .restart-button {
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 20px;
-      }
-
-      .audio-controls {
-        position: flex;
-        top: 10px;
-        right: 10px;
-        background: rgb(0, 83, 128);
-        padding: 10px;
-        border-radius: 5px;
-        display: flex;
-        justify-content: space-between;
+        width: 90%;
+        max-width: 400px;
+        margin: 1rem;
       }
 
       .celebration {
@@ -222,13 +225,22 @@
         }
       }
 
-      .correct {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .incorrect {
-        background-color: #f8d7da;
-        color: #721c24;
+      @media (max-width: 480px) {
+        .game-container {
+          padding: 1rem;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+
+        input[type="number"] {
+          width: 100%;
+        }
+
+        .mapping {
+          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        }
       }
     </style>
   </head>
