@@ -21,16 +21,18 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        background: none;
       }
 
       .game-container {
-        background-color: rgb(0, 83, 128);
+        background-color: rgb(0, 83, 128, 0.9);
         padding: 1.25rem;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(28, 13, 165, 0.1);
         width: 100%;
         max-width: 800px;
         margin: 0 auto;
+        backdrop-filter: blur(5px);
       }
 
       h1 {
@@ -208,6 +210,30 @@
         animation: fall linear forwards;
       }
 
+      .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+        background: linear-gradient(45deg, #1a237e, #000051);
+        overflow: hidden;
+    }
+
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: twinkle var(--duration) infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+  }
+
       @keyframes fall {
         to {
           transform: translateY(100vh) rotate(360deg);
@@ -245,6 +271,7 @@
     </style>
   </head>
   <body>
+    <div class="stars-container" id="starsContainer"></div>
     <div class="game-container">
       <div class="audio-controls">
         <button onclick="toggleBackgroundMusic()" id="musicToggle">
@@ -320,7 +347,7 @@
     <script>
       let currentProblem = null;
       let timer = null;
-      let timeLeft = 30;
+      let timeLeft = 50;
       let totalScore = 0;
       let currentDifficulty = 1;
       let hintCount = 0;
@@ -349,7 +376,7 @@
         if (isMusicEnabled) {
           backgroundMusic.play();
         }
-        timeLeft = 30;
+        timeLeft = 50;
         updateTimer();
         setDifficulty(1);
         startTimer();
@@ -401,8 +428,7 @@
                 clearInterval(timer);
                 document.getElementById("submitBtn").disabled = true;
                 document.getElementById("feedback").textContent = "Time's up!";
-                document.getElementById("feedback").className =
-                  "feedback incorrect";
+                document.getElementById("feedback").className ="feedback incorrect";
               }
             }
           }, 1000);
@@ -425,7 +451,7 @@
         });
 
         // Reset all game states
-        timeLeft = 30;
+        timeLeft = 50;
         updateTimer();
         document.getElementById("score").textContent = "0";
         document.getElementById("difficulty").textContent = "Easy";
@@ -495,13 +521,36 @@
         newProblem();
       }
 
+      function createStars() {
+        const container = document.getElementById('starsContainer');
+        const starCount = 200;
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // Random size between 1-3px
+            const size = Math.random() * 2 + 1;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            
+            // Random position
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            
+            // Random twinkle duration between 1-5s
+            star.style.setProperty('--duration', `${Math.random() * 4 + 1}s`);
+            
+            container.appendChild(star);
+        }
+    }
+
       async function newProblem() {
         try {
-          timeLeft = 30;
+          
           updateTimer();
           const response = await fetch(
-            `/get_problem?difficulty=${currentDifficulty}`
-          );
+            `/get_problem?difficulty=${currentDifficulty}`);
           currentProblem = await response.json();
 
           const expressionParts = currentProblem.expression.split(/([+\-*/])/);
@@ -598,7 +647,7 @@
 
         setTimeout(() => {
           container.innerHTML = "";
-        }, 3000);
+        }, 5000);
       }
 
       function createCrackerCelebration(isExploding = true) {
@@ -618,7 +667,7 @@
 
         setTimeout(() => {
           container.innerHTML = "";
-        }, 3000);
+        }, 5000);
       }
 
       function playCorrectCelebration() {
@@ -647,9 +696,9 @@
       async function checkAnswer() {
         const userAnswer = document.getElementById("answer").value;
         if (!userAnswer) return;
-
+    
         clearInterval(timer);
-
+    
         try {
           const response = await fetch("/check_answer", {
             method: "POST",
@@ -659,42 +708,49 @@
             body: JSON.stringify({
               answer: userAnswer,
               correct_answer: currentProblem.result,
-              time_taken: 30 - timeLeft,
+              time_taken: timeLeft,
               difficulty: currentDifficulty,
             }),
           });
-
+    
           const result = await response.json();
           const feedback = document.getElementById("feedback");
 
-          if (result.correct) {
-            playSound("correctSound");
-            playCorrectCelebration();
-            setTimeout(newProblem, 3000);
-            totalScore += result.score;
-            document.getElementById("score").textContent = totalScore;
+          
+          timeLeft = result.remaining_time;
+          updateTimer(timeLeft);
+          
 
-            if (totalScore >= 1000) {
-              showGameOverScreen();
-            } else {
-              feedback.textContent =
-                "Correct! You earned ${result.score} points!";
-              feedback.className = "feedback correct";
-
-              setTimeout(newProblem, 3000);
-            }
+          const isCorrect = Math.abs(parseFloat(userAnswer) - currentProblem.result) < 0.01;
+                    
+    
+          if (result.is_correct) {
+              playSound("correctSound");
+              playCorrectCelebration();
+              totalScore += result.score;
+              document.getElementById("score").textContent = totalScore;
+    
+              if (totalScore >= 1000) {
+                  showGameOverScreen();
+              } else {
+                  feedback.textContent =
+                    "Correct! You earned " + result.score + "  points! +5 seconds bonus!";
+                  feedback.className = "feedback correct";
+    
+                  setTimeout(newProblem, 1000);
+              }
           } else {
-            playSound("wrongSound");
-            playIncorrectCelebration();
-            feedback.textContent = "Incorrect. try again you can do this!";
-            feedback.className = "feedback incorrect";
-            setTimeout(newProblem, 3000);
+              playSound("wrongSound");
+              playIncorrectCelebration();
+              feedback.textContent = "Incorrect. try again you can do this! -10 seconds penulty";
+              feedback.className = "feedback incorrect";
+              setTimeout(newProblem, 1000);
           }
         } catch (error) {
-          console.error("Error checking answer:", error);
-          document.getElementById("feedback").textContent =
-            "Error processing answer. Please try again.";
-          document.getElementById("feedback").className = "feedback incorrect";
+            console.error("Error checking answer:", error);
+            document.getElementById("feedback").textContent =
+                "Error processing answer. Please try again.";
+            document.getElementById("feedback").className = "feedback incorrect";
         }
       }
 
@@ -712,6 +768,11 @@
           audio.load();
         });
       };
+
+      // Initialize stars when page loads
+      window.addEventListener('load', () => {
+        createStars();
+    });
     </script>
   </body>
 </html>
