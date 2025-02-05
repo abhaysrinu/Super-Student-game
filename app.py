@@ -100,7 +100,7 @@ def generate_problem(difficulty=1):
 
 @app.route('/')
 def index():
-    return render_template('index1.html')
+    return render_template('index2.html')
 
 @app.route('/get_problem')
 def get_problem():
@@ -113,15 +113,42 @@ def check_answer():
     data = request.json
     user_answer = float(data['answer'])
     correct_answer = float(data['correct_answer'])
+    remaining_time = float(data['time_taken'])
     
     base_score = 10 if data['difficulty'] == 2 else 5
-    time_taken = float(data['time_taken'])
-    time_penalty = max(0, (30 - time_taken) / 30)
-    score = int(base_score * time_penalty)
+    is_correct = abs(user_answer - correct_answer) < 0.01
+    
+   
+    
+    if is_correct:
+        remaining_time += 5  # Add 5 seconds for correct answer
+    else:
+        remaining_time -= 10  # Subtract 10 seconds for wrong answer
+        
+    remaining_time = max(0, min(50, remaining_time))
+    
+    if remaining_time > 50:
+        time_multiplier = 0.0
+    elif remaining_time >= 41 and remaining_time <= 50:  # Changed to elif
+        time_multiplier = 0.2
+    elif remaining_time >= 31 and remaining_time <= 40:
+        time_multiplier = 0.4
+    elif remaining_time >= 21 and remaining_time <= 30:
+        time_multiplier = 0.6
+    elif remaining_time >= 11 and remaining_time <= 20:
+        time_multiplier = 0.8
+    elif remaining_time >= 1 and remaining_time <= 10:
+        time_multiplier = 1.0
+    else:
+        time_multiplier = 0.0
+        
+    score = int(base_score * time_multiplier)
+    
 
     return jsonify({
-        'correct': abs(user_answer - correct_answer) < 0.01,
-        'score': score
+        'score': score,
+        'is_correct': is_correct,
+        'remaining_time': remaining_time
     })
 
 if __name__ == '__main__':  
