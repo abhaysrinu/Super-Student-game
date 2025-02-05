@@ -100,7 +100,7 @@ def generate_problem(difficulty=1):
 
 @app.route('/')
 def index():
-    return render_template('index2.html')
+    return render_template('index1.html')
 
 @app.route('/get_problem')
 def get_problem():
